@@ -31,6 +31,9 @@ def main():
     if "SURGE_TOKEN" not in os.environ:
         print("ERROR: SURGE_TOKEN not set", file=sys.stderr)
         return 2
+    if not os.getenv("GHCR_TOKEN"):
+        print("ERROR: GHCR_TOKEN not set", file=sys.stderr)
+        return 2
     if not shutil.which("oras"):
         print("ERROR: oras CLI not installed", file=sys.stderr)
         return 2

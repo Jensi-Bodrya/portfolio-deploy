@@ -37,11 +37,6 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
         run: echo "$GHCR_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-      - name: Validate image reference and target
-        env:
-          TARGET_ENV: ${{ inputs.environment }}
-          TARGET_IMAGE: ${{ inputs.image }}
-        run: python3 scripts/deploy_oci.py --environment "$TARGET_ENV" --image "$TARGET_IMAGE" --dry-run
       - name: Pull OCI site and deploy to selected Surge domain
         env:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
