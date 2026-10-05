@@ -1,0 +1,60 @@
+name: Validate chart repo
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: Chart tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run tests
+        run: python3 -m unittest discover -s tests -v
+
+  manifests:
+    name: Manifest validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Every environment manifest is valid
+        run: |
+          for f in environments/*.yaml; do
+            env_name=$(basename "$f" .yaml)
+            echo "--- validating $env_name"
+            python3 scripts/deploy_env.py --environment "$env_name" --dry-run \
+              || { echo "FAILED: $env_name"; exit 1; }
+          done
+      - name: Every pinned image is registered
+        run: |
+          python3 - <<'PY'
+          import json, sys, pathlib
+          sys.path.insert(0, "scripts")
+          from lib import load_index, parse_env_yaml
+
+          index = load_index()
+          known = {e["id"] for e in index.get("images", [])}
+          failures = []
+          for path in sorted(pathlib.Path("environments").glob("*.yaml")):
+              env = parse_env_yaml(path.read_text())
+              image = env.get("image", "")
+              status = "ok" if image in known else "MISSING"
+              print(f"  {path.stem}: {image} -> {status}")
+              if status == "MISSING":
+                  failures.append(f"{path.stem} -> {image}")
+          if failures:
+              print("\nUnregistered image pins:", ", ".join(failures), file=sys.stderr)
+              sys.exit(1)
+          PY

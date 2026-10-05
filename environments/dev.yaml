@@ -1,0 +1,4 @@
+name: dev
+domain: jensi-bodrya-dev.surge.sh
+image: main-initial
+description: Automatic dev environment. Tracks the latest main image.

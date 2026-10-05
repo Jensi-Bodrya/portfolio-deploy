@@ -1,0 +1,4 @@
+name: prod
+domain: jensi-bodrya.surge.sh
+image: main-initial
+description: Production site. Only ever pinned to a reviewed, merged main image.
