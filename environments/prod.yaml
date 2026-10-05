@@ -1,4 +1,4 @@
 name: prod
 domain: jensi-bodrya.surge.sh
-image: main-initial
+image: "ghcr.io/jensi-bodrya/portfolio-images:main-initial"
 description: Production site. Only ever pinned to a reviewed, merged main image.

@@ -1,4 +1,4 @@
 name: dev
 domain: jensi-bodrya-dev.surge.sh
-image: main-initial
+image: "ghcr.io/jensi-bodrya/portfolio-images:main-initial"
 description: Automatic dev environment. Tracks the latest main image.

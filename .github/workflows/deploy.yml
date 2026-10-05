@@ -1,26 +1,22 @@
-name: Deploy environment
+name: Deploy environment from GHCR
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: Environment to deploy
-        required: true
-        default: dev-2
+        description: Environment
         type: choice
-        options:
-          - dev
-          - dev-2
-          - prod
+        options: [dev, dev-2, prod]
+        default: dev-2
+        required: true
       image:
-        description: Image id to deploy (leave blank to use the environment's pinned image)
-        required: false
-        default: ""
+        description: Immutable GHCR ref e.g. ghcr.io/jensi-bodrya/portfolio-images:feat-x-abcdef1
+        required: true
         type: string
 
 permissions:
-  contents: write
-  actions: read
+  contents: read
+  packages: read
 
 concurrency:
   group: deploy-${{ inputs.environment }}
@@ -28,76 +24,30 @@ concurrency:
 
 jobs:
   deploy:
-    name: Deploy ${{ inputs.environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-
-      - name: Install Surge
-        run: npm install -g surge
-
-      - name: Resolve deployment plan
+      - uses: oras-project/setup-oras@v1
+      - name: Login to GHCR
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+        run: echo "$GHCR_TOKEN" | oras login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+      - name: Validate image reference and target
         env:
           TARGET_ENV: ${{ inputs.environment }}
           TARGET_IMAGE: ${{ inputs.image }}
-        run: |
-          args=(--environment "$TARGET_ENV" --dry-run)
-          if [[ -n "$TARGET_IMAGE" ]]; then
-            args+=(--image "$TARGET_IMAGE")
-          fi
-          python3 scripts/deploy_env.py "${args[@]}"
-
-      - name: Deploy
+        run: python3 scripts/deploy_oci.py --environment "$TARGET_ENV" --image "$TARGET_IMAGE" --dry-run
+      - name: Pull OCI site and deploy to selected Surge domain
         env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
           SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
           TARGET_ENV: ${{ inputs.environment }}
           TARGET_IMAGE: ${{ inputs.image }}
-        run: |
-          args=(--environment "$TARGET_ENV")
-          if [[ -n "$TARGET_IMAGE" ]]; then
-            args+=(--image "$TARGET_IMAGE")
-          fi
-          python3 scripts/deploy_env.py "${args[@]}"
-
-      - name: Persist image pin
-        env:
-          TARGET_ENV: ${{ inputs.environment }}
-          TARGET_IMAGE: ${{ inputs.image }}
-        run: |
-          if [[ -z "$TARGET_IMAGE" ]]; then
-            echo "No override requested — pin unchanged."
-            exit 0
-          fi
-          if [[ -z "$(git status --porcelain environments/)" ]]; then
-            echo "Pin already at $TARGET_IMAGE."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add environments/
-          git commit -m "chore($TARGET_ENV): pin to image $TARGET_IMAGE"
-          git push
-
-      - name: Summary
-        if: always()
-        env:
-          TARGET_ENV: ${{ inputs.environment }}
-          TARGET_IMAGE: ${{ inputs.image }}
-        run: |
-          {
-            echo "### Deployment: $TARGET_ENV"
-            echo ""
-            if [[ -n "$TARGET_IMAGE" ]]; then
-              echo "Requested image: \`$TARGET_IMAGE\`"
-            else
-              echo "Deployed the image pinned in \`environments/$TARGET_ENV.yaml\`"
-            fi
-            echo ""
-            echo "Result: **${{ job.status }}**"
-          } >> "$GITHUB_STEP_SUMMARY"
+        run: python3 scripts/deploy_oci.py --environment "$TARGET_ENV" --image "$TARGET_IMAGE"

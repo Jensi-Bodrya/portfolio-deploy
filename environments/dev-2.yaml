@@ -1,4 +1,4 @@
 name: dev-2
 domain: jensi-bodrya-dev2.surge.sh
-image: main-initial
+image: "ghcr.io/jensi-bodrya/portfolio-images:main-initial"
 description: Shared testing environment. Can be pointed at any stored image, including a feature-branch build, to exercise a specific change before merge.

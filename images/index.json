@@ -1,13 +1,5 @@
 {
-  "images": [
-    {
-      "id": "main-initial",
-      "branch": "main",
-      "sha": "uninitialized",
-      "source_repo": "Jensi-Bodrya/portfolio",
-      "registered_at": "2026-10-05T00:00:00Z",
-      "files": [],
-      "placeholder": true
-    }
-  ]
+  "images": [],
+  "storage": "ghcr.io/jensi-bodrya/portfolio-images",
+  "format": "oci-artifact"
 }
