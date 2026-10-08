@@ -39,7 +39,7 @@ def main() -> int:
             for path in sorted(source.rglob("*")):
                 if path.is_file(): archive.add(path, arcname=path.relative_to(source))
         command = ["oras", "push", "--disable-path-validation", ref,
-                   f"{tar_path}:application/vnd.jensi.portfolio.site.v1.tar",
+                   f"{tar_path}:application/vnd.oci.image.layer.v1.tar",
                    "--annotation", f"org.opencontainers.image.title={image_id}",
                    "--annotation", "org.opencontainers.image.source=https://github.com/Jensi-Bodrya/portfolio",
                    "--annotation", f"org.opencontainers.image.revision={args.sha}",
