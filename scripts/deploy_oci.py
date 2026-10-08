@@ -46,6 +46,8 @@ def main():
             print(pull.stderr, file=sys.stderr); return pull.returncode
         payloads = list(Path(temp).glob("*.tar"))
         if not payloads:
+            payloads = list(Path(temp).rglob("*.tar"))
+        if not payloads:
             print("ERROR: OCI image contains no site tar payload", file=sys.stderr); return 1
         import tarfile
         staging = Path(temp) / "site"
