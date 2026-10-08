@@ -41,7 +41,7 @@ def main():
     if login.returncode:
         print(login.stderr, file=sys.stderr); return login.returncode
     with tempfile.TemporaryDirectory(prefix="oci-site-") as temp:
-        pull = subprocess.run(["oras", "pull", ref, "-o", temp], text=True, capture_output=True)
+        pull = subprocess.run(["oras", "pull", "--allow-path-traversal", ref, "-o", temp], text=True, capture_output=True)
         if pull.returncode:
             print(pull.stderr, file=sys.stderr); return pull.returncode
         payloads = list(Path(temp).glob("*.tar"))
