@@ -44,12 +44,12 @@ def main():
         pull = subprocess.run(["oras", "pull", "--allow-path-traversal", ref, "-o", temp], text=True, capture_output=True)
         if pull.returncode:
             print(pull.stderr, file=sys.stderr); return pull.returncode
+        print(f"ORAS pull output: {pull.stdout.strip()}")
         payloads = list(Path(temp).glob("*.tar"))
         if not payloads:
             payloads = list(Path(temp).rglob("*.tar"))
         if not payloads:
-            payloads = list(Path(temp).rglob("**/*"))
-            payloads = [p for p in payloads if p.is_file() and p.suffix == ".tar"]
+            payloads = [p for p in Path(temp).rglob("*") if p.is_file() and p.suffix == ".tar"]
         if not payloads:
             print("ERROR: OCI image contains no site tar payload", file=sys.stderr); return 1
         import tarfile
